@@ -1,21 +1,27 @@
-%TO DO: When trimming reads, consider the case where there is one low
-%quality read in the exact middle of the sequence. Need to choose what side
-%of the read to use (may want to use whichever end has higher overall
-%quality).
-%NOTE: This can also happen if you have trimmed reads of equal length.
-%Should probably compute average quality to choose which one.
+%TO DO: When two stretches of trimmed reads have same length, I choose the
+%one with higher average quality. May want to change this if one of them
+%covers the CRISPR site and still has avg > 30.
 
 [fileName, pathName] = uigetfile('E:\Zon Lab\Sequencing\MGH SEQUENCING\*.fastq');
 
 
-% Read in fastq file
+%%  Read in fastq file
 fastq_seq = fastqread(fullfile(pathName,fileName));
 
-%Convert quality scores
+%% Convert quality scores
 quality = {fastq_seq(:).Quality}';
 quality = cellfun(@(x) double(x)-33,quality,'UniformOutput',false);
 
-trimIndex = cellfun(@(x) trimReads(x,30),quality,'UniformOutput',false);
+%% Trim reads so that quality for every sequence is >= 30.
+trimIdx = cellfun(@(x) trimReadIndex(x,30),quality,'UniformOutput',false);
+trimReadLengths = cellfun('length',trimIdx);
+trimLongReadsIdx = find(trimReadLengths>=50);
+
+[fastq_seq_new] = trimReads(fastq_seq, trimIdx,trimLongReadsIdx);
+
+
+
+
 
 
 %% Separate paired end sequencing into 2 files
@@ -42,26 +48,3 @@ trimIndex = cellfun(@(x) trimReads(x,30),quality,'UniformOutput',false);
 
 
 
-function seqIdx = trimReads(scores,threshold)
-
-A = scores>=threshold;
-x1 = find(A == 0);
-
-numOfZeros = size(x1,1);
-if numOfZeros == 0
-    seqIdx = NaN;
-elseif numOfZeros > 1
-    x2 = diff(x1);
-    [m, idx] = max(x2);
-    x3 = x1(idx)+1;
-    seqIdx = x3:(x3+m-2);
-elseif numOfZeros == 1
-    if x1 <= size(scores,1)/2
-        seqIdx = (x1+1):size(scores,1);
-    else
-        seqIdx = 1:(x1-1);
-    end
-    
-end
-
-end
