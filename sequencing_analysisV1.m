@@ -2,6 +2,8 @@
 %one with higher average quality. May want to change this if one of them
 %covers the CRISPR site and still has avg > 30.
 
+%TO DO: Maybe provide an output % of reads that are length greater than 50.
+
 [fileName, pathName] = uigetfile('E:\Zon Lab\Sequencing\MGH SEQUENCING\*.fastq');
 
 
@@ -21,15 +23,22 @@ trimLongReadsIdx = find(trimReadLengths>=50);
 
 
 
-
-
-
 %% Separate paired end sequencing into 2 files
 
-% % Vectorized
-% idx = ~cellfun('isempty',strfind({fastq_seq.Header},'1:N'));
-% pairedEndTest1 = fastq_seq(idx);
-% pairedEndTest2 = fastq_seq(~idx);
+% Vectorized
+idx = ~cellfun('isempty',strfind({fastq_seq_new.Header},'1:N'));
+pairedEndTest1 = fastq_seq_new(idx);
+pairedEndTest2 = fastq_seq_new(~idx);
+
+% Take reverse complement of the 2nd paired end reads
+p2 = {pairedEndTest2(:).Sequence}';
+p3 = cellfun(@(x) seqrcomplement(x), p2,'UniformOutput',false);
+[pairedEndTest2.Sequence] = p3{:};
+
+%% Find paired reads
+pairedIdx = findPairedReads(pairedEndTest1.Header,pairedEndTest2.Header);
+
+
 % 
 % if ~exist(fullfile(pathName,'Parsed Output'),'dir')
 %     mkdir(pathName,'Parsed Output');
