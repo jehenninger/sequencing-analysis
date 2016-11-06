@@ -7,7 +7,7 @@ function trimIdx = trimReadIndex(scores,threshold)
 A = scores >= threshold;
 
 B = SplitVec(A);
-sizeOfVecs = cellfun('length',B);
+sizeOfVecs = cellfun(@(x) findLargestArrayOfOnes(x),B);
 [maxValue, maxIndex] = max(sizeOfVecs);
 
 maxTest = find(sizeOfVecs == maxValue);
@@ -29,6 +29,10 @@ end
 if numel(maxTest) == 1
     trimIdx = firstIndex(maxIndex) : lastIndex(maxIndex);
 else
+    % This part is for cases where there are two stretches of quality
+    % sequence equal in length. Here, I pick the highest average quality of
+    % the two, but we may want to rework it in the case where one of the
+    % stretches covers the CRISPR site.
     trimIdxTest = cell(numel(maxTest),1);
     meanQual = zeros(numel(maxTest),1);
     for kk = 1:numel(maxTest)
@@ -40,6 +44,14 @@ else
     trimIdx = firstIndex(maxTest(highestQualIndex)) : lastIndex(maxTest(highestQualIndex));
 end
 
+    function mySize = findLargestArrayOfOnes(splitVector)
+        if all(splitVector)
+            mySize = length(splitVector);
+        else
+            mySize = 0;
+        end
+        
+    end
 
 
 

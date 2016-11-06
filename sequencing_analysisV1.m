@@ -4,40 +4,96 @@
 
 %TO DO: Maybe provide an output % of reads that are length greater than 50.
 
+%TO DO: Maybe want to change some of these cellfun's to for loops in order
+%to add progress bars. Probably won't change performance much.
+
+% LEFT OFF: paired and unpaired are probably ready for bowtie.
+
 % [fileName, pathName] = uigetfile('E:\Zon Lab\Sequencing\MGH SEQUENCING\*.fastq');
-[fileName, pathName] = uigetfile('/Users/jonathanhenninger2/Desktop/MGH CRISPR Sequencing/*.fastq');
+[fileName, pathName] = uigetfile('D:\Jon-HDD\Google Drive\Sequencing\MGH CRISPR SEQUENCING\*.fastq');
+% [fileName, pathName] = uigetfile('/Users/jonathanhenninger2/Desktop/MGH CRISPR Sequencing/*.fastq');
 
 
 %%  Read in fastq file
 fastq_seq = fastqread(fullfile(pathName,fileName));
 
+%% Split paired end reads assuming odds and evens
+paired1 = fastq_seq(1:2:end); 
+paired2 = fastq_seq(2:2:end);
+
 %% Convert quality scores
-quality = {fastq_seq(:).Quality}';
-quality = cellfun(@(x) double(x)-33,quality,'UniformOutput',false);
+quality1 = {paired1(:).Quality}';
+quality1 = cellfun(@(x) double(x)-33,quality1,'UniformOutput',false);
+
+quality2 = {paired2(:).Quality}';
+quality2 = cellfun(@(x) double(x)-33,quality2,'UniformOutput',false);
 
 %% Trim reads so that quality for every sequence is >= 30.
-trimIdx = cellfun(@(x) trimReadIndex(x,30),quality,'UniformOutput',false);
-trimReadLengths = cellfun('length',trimIdx);
-trimLongReadsIdx = find(trimReadLengths>=50);
+trimIdx1 = cellfun(@(x) trimReadIndex(x,30),quality1,'UniformOutput',false);
+trimReadLengths1 = cellfun('length',trimIdx1);
+trimLongReadsIdx1 = find(trimReadLengths1>=50);
 
-[fastq_seq_new] = trimReads(fastq_seq, trimIdx,trimLongReadsIdx);
+[paired1New] = trimReads(paired1, trimIdx1,trimLongReadsIdx1);
+
+trimIdx2 = cellfun(@(x) trimReadIndex(x,30),quality2,'UniformOutput',false);
+trimReadLengths2 = cellfun('length',trimIdx2);
+trimLongReadsIdx2 = find(trimReadLengths2>=50);
+
+[paired2New] = trimReads(paired2, trimIdx2,trimLongReadsIdx2);
 
 
 
 %% Separate paired end sequencing into 2 files
+% 
+% % Vectorized
+% idx = ~cellfun('isempty',strfind({fastq_seq_new.Header},'1:N'));
+% pairedEndTest1 = fastq_seq_new(idx);
+% pairedEndTest2 = fastq_seq_new(~idx);
 
-% Vectorized
-idx = ~cellfun('isempty',strfind({fastq_seq_new.Header},'1:N'));
-pairedEndTest1 = fastq_seq_new(idx);
-pairedEndTest2 = fastq_seq_new(~idx);
+% % Take reverse complement of the 2nd paired end reads
+% % NEEDED IF YOU WANT TO JOIN SEQUENCES INTO ONE READ
+% p2 = {paired2New(:).Sequence}';
+% p3 = cellfun(@(x) seqrcomplement(x), p2,'UniformOutput',false);
+% [paired2New.Sequence] = p3{:};
+% clear p2 p3
 
-% Take reverse complement of the 2nd paired end reads
-p2 = {pairedEndTest2(:).Sequence}';
-p3 = cellfun(@(x) seqrcomplement(x), p2,'UniformOutput',false);
-[pairedEndTest2.Sequence] = p3{:};
+% %% Find paired reads
+% pairedIdx = findPairedReads({pairedEndTest1(:).Header},{pairedEndTest2(:).Header});
 
-%% Find paired reads
-[pairedIdx, debug_idx] = findPairedReads({pairedEndTest1(:).Header},{pairedEndTest2(:).Header});
+
+%% Merge matched paired reads
+[~, pairs1Idx, pairs2Idx] = intersect(trimLongReadsIdx1, trimLongReadsIdx2);
+
+[~, unpaired1Idx] = setdiff(trimLongReadsIdx1,trimLongReadsIdx2,'stable');
+[~, unpaired2Idx] = setdiff(trimLongReadsIdx2,trimLongReadsIdx1,'stable');
+
+paired1NewFilt = paired1New(pairs1Idx);
+unpaired1NewFilt = paired1New(unpaired1Idx);
+
+paired2NewFilt = paired2New(pairs2Idx);
+unpaired2NewFilt = paired2New(unpaired2Idx);
+
+%%If we want to join the actual sequences together
+% pairedJoined = cellfun(@(x,y) joinseq(x,y),{paired1NewFilt(:).Sequence}',{paired2NewFilt(:).Sequence}');
+
+% Join paired sequences into one fastq
+numOfCellsNeeded = numel(pairs1Idx) + numel(pairs2Idx);
+paired = struct('Header',cell(numOfCellsNeeded,1),...
+    'Sequence',numOfCellsNeeded,...
+    'Quality',numOfCellsNeeded);
+paired(2:2:end) = paired2NewFilt(:);
+paired(1:2:end) = paired1NewFilt(:);
+paired = paired';
+
+% Join unpaired sequences into one fastq
+numOfCellsNeeded = numel(unpaired1NewFilt) + numel(unpaired2NewFilt);
+unpaired = struct('Header',cell(numOfCellsNeeded,1),...
+    'Sequence',numOfCellsNeeded,...
+    'Quality',numOfCellsNeeded);
+unpaired(1:numel(unpaired1NewFilt)) = unpaired1NewFilt(:);
+unpaired((numel(unpaired1NewFilt)+1):end) = unpaired2NewFilt(:);
+unpaired = unpaired';
+
 
 
 % 

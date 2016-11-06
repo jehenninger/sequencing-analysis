@@ -1,6 +1,7 @@
 function [fastq_seq_new] = trimReads(fastq_seq, trimIdx,trimLongReadsIdx)
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+
+% This function will trim reads using the index from 'trimReadIndex.m'. It
+% returns a new fastq file with the trimmed sequences.
 header = {fastq_seq(:).Header}';
 seq = {fastq_seq(:).Sequence}';
 qual = {fastq_seq(:).Quality}';

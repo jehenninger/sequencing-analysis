@@ -21,21 +21,23 @@ if sizeTest >= 0
     hWait = waitbar(0,'Finding paired read matches...');
     steps = numel(p2Strings);
     
-    string_idx = zeros(numel(p2Strings),1);
-    debug_idx = zeros(numel(p2Strings),1);
+    %     string_idx = zeros(numel(p2Strings),1);
+    string_idx = cell(numel(p2Strings),1);
+%     debug_idx = zeros(numel(p2Strings),1);
     for ii = 1:numel(p2Strings)
-        try
-            string_idx(ii) = find(strcmp(p2Strings{ii},p1Strings)== 1);
-            if isempty(string_idx(ii)) == 1
-                string_idx(ii) = -1;
-            end
-        catch
-            debug_idx(ii) = ii;
+        %         try
+        string_idx{ii} = find(strcmp(p2Strings{ii},p1Strings)== 1);
+        if isempty(string_idx{ii})
+            string_idx{ii} = -1;
         end
+        %         catch
+        %             debug_idx(ii) = ii;
+        %         end
         waitbar(ii/steps);
     end
     close(hWait);
     
+    string_idx = cell2mat(string_idx);
     
     %         string_idx = cellfun(@(x,y) find(strcmp(x,y)),p1Strings,p2Strings,...
     %             'UniformOutput',false);
