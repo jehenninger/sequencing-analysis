@@ -4,7 +4,8 @@
 
 %TO DO: Maybe provide an output % of reads that are length greater than 50.
 
-[fileName, pathName] = uigetfile('E:\Zon Lab\Sequencing\MGH SEQUENCING\*.fastq');
+% [fileName, pathName] = uigetfile('E:\Zon Lab\Sequencing\MGH SEQUENCING\*.fastq');
+[fileName, pathName] = uigetfile('/Users/jonathanhenninger2/Desktop/MGH CRISPR Sequencing/*.fastq');
 
 
 %%  Read in fastq file
@@ -36,7 +37,7 @@ p3 = cellfun(@(x) seqrcomplement(x), p2,'UniformOutput',false);
 [pairedEndTest2.Sequence] = p3{:};
 
 %% Find paired reads
-pairedIdx = findPairedReads(pairedEndTest1.Header,pairedEndTest2.Header);
+[pairedIdx, debug_idx] = findPairedReads({pairedEndTest1(:).Header},{pairedEndTest2(:).Header});
 
 
 % 
