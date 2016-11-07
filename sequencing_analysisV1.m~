@@ -15,10 +15,7 @@
 %TO DO: Figure out issues with 'samtools sort'
 
 %TO DO: Add unpaired reads to the same bowtie as the paired reads. Use '-U
-%<m>' argument.
-
-%TO DO: Talk to Song about the genome file. It seems like my reads aren't
-%lining up with the Exons that he has provided.
+%<m>' argm
 
 % LEFT OFF: paired and unpaired are probably ready for bowtie.
 
