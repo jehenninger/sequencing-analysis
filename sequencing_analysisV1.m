@@ -110,48 +110,48 @@ unpaired = unpaired';
 
 %% Write fastq files
 disp('Writing fastq files...');
-if ~exist(fullfile(pathName,'Fastq trimmed'),'dir')
-    mkdir(pathName,'Fastq trimmed');
+if ~exist(fullfile(pathName,'Fastq_trimmed'),'dir')
+    mkdir(pathName,'Fastq_trimmed');
 end
 
 % fastqwrite(fullfile(pathName, 'Fastq trimmed',[sampleName,'_paired.fastq']),paired);
 % fastqwrite(fullfile(pathName, 'Fastq trimmed',[sampleName,'_unpaired.fastq']),unpaired);
-pair1File = fullfile(pathName,'Fastq trimmed',[sampleName,'_paired1.fastq']);
-pair2File = fullfile(pathName,'Fastq trimmed',[sampleName,'_paired2.fastq']);
-unpairedFile = fullfile(pathName,'Fastq trimmed',[sampleName,'_unpaired.fastq']);
+pair1File = fullfile(pathName,'Fastq_trimmed',[sampleName,'_paired_1.fastq']);
+pair2File = fullfile(pathName,'Fastq_trimmed',[sampleName,'_paired_2.fastq']);
+unpairedFile = fullfile(pathName,'Fastq_trimmed',[sampleName,'_unpaired.fastq']);
 
 fastqwrite(pair1File,paired1NewFilt(:)');
 fastqwrite(pair2File,paired2NewFilt(:)');
 
 fastqwrite(unpairedFile,unpaired);
 
-%% Align reads with Bowtie
-
-[genomeFile, genomePath] = uigetfile(...
-    '/Users/jonathanhenninger2/Desktop/MGH CRISPR SEQUENCING/custom_genome/*.fa');
-genomeFile = genomeFile(1:(end-3));
-
-if ~exist(fullfile(pathName,'BAM Output'),'dir')
-    mkdir(pathName,'BAM Output');
-end
-
-bowTieFilePaired = fullfile(pathName,'BAM Output',[sampleName,'_paired.bam']);
-bowtie(fullfile(genomePath,genomeFile),...
-    {pair1File,pair2File},...
-    bowTieFilePaired,...
-    'Paired',true,...
-    'BowtieOptions','-l 15',...
-    'BowtieOptions','-e 10000');
-
-bowTieFileUnPaired = fullfile(pathName,'BAM Output',[sampleName,'_unpaired.bam']);
-bowtie(fullfile(genomePath,genomeFile),...
-    {unpairedFile},...
-    bowTieFileUnPaired,...
-    'BowtieOptions','-l 15',...
-    'BowtieOptions','-e 10000');
-
-bmPaired = BioMap(bowTieFilePaired);
-bmUnpaired = BioMap(bowTieFileUnPaired);
+% %% Align reads with Bowtie
+% 
+% [genomeFile, genomePath] = uigetfile(...
+%     '/Users/jonathanhenninger2/Desktop/MGH CRISPR SEQUENCING/custom_genome/*.fa');
+% genomeFile = genomeFile(1:(end-3));
+% 
+% if ~exist(fullfile(pathName,'BAM Output'),'dir')
+%     mkdir(pathName,'BAM Output');
+% end
+% 
+% bowTieFilePaired = fullfile(pathName,'BAM Output',[sampleName,'_paired.bam']);
+% bowtie(fullfile(genomePath,genomeFile),...
+%     {pair1File,pair2File},...
+%     bowTieFilePaired,...
+%     'Paired',true,...
+%     'BowtieOptions','-l 15',...
+%     'BowtieOptions','-e 10000');
+% 
+% bowTieFileUnPaired = fullfile(pathName,'BAM Output',[sampleName,'_unpaired.bam']);
+% bowtie(fullfile(genomePath,genomeFile),...
+%     {unpairedFile},...
+%     bowTieFileUnPaired,...
+%     'BowtieOptions','-l 15',...
+%     'BowtieOptions','-e 10000');
+% 
+% bmPaired = BioMap(bowTieFilePaired);
+% bmUnpaired = BioMap(bowTieFileUnPaired);
 
 % 
 % if ~exist(fullfile(pathName,'Parsed Output'),'dir')
